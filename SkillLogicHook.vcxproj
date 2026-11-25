@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="config_parser.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="signaturescan.h" />
   </ItemGroup>

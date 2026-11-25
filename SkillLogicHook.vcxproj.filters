@@ -21,6 +21,9 @@
     <ClInclude Include="signaturescan.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="config_parser.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

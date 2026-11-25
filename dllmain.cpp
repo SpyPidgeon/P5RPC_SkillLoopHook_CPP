@@ -4,20 +4,20 @@
 HMODULE dll_handle = 0;
 uint16_t* skillIDReplacement = nullptr;
 SkillHotLoop oSkillHotLoop;
-
-struct SkillPair
-{
-	short skillOriginal;
-	short skillOverride;
-};
+std::unordered_map<uint16_t, uint16_t> skillPairs;
 
 intptr_t SkillHotLoopHook(intptr_t thisPTR, intptr_t param2)
 {
     *skillIDReplacement = *(uint16_t*)(thisPTR + 0x79c8);
-    *skillIDReplacement = 10;
+
+    auto it = skillPairs.find(*skillIDReplacement);
+    if (it != skillPairs.end())
+        *skillIDReplacement = it->second;
 
     return oSkillHotLoop(thisPTR, param2);
 }
+
+namespace fs = std::filesystem;
 
 void __stdcall ModStart()
 {
@@ -76,6 +76,7 @@ void __stdcall ModStart()
 
     //BYTE filler = 0x00;
 
+    // Assembly patching.
     DWORD old;
 	VirtualProtect((void*)instructionAddress, 8, PAGE_EXECUTE_READWRITE, &old);
 	memcpy((void*)instructionAddress, patch.data(), sizeof(patch));
@@ -94,12 +95,20 @@ void __stdcall ModStart()
     skillHotLoopAddress = GetAddressFromGlobalRef(skillHotLoopAddress);
     oSkillHotLoop = (SkillHotLoop)skillHotLoopAddress;
 
-    printf("Addresses: 0x%p, 0x%p, 0x%p\n", instructionAddress, skillIDReplacement, oSkillHotLoop);
-
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     DetourAttach(&(PVOID&)oSkillHotLoop, SkillHotLoopHook);
     DetourTransactionCommit();
+
+    std::string path = GetDLLPath("");
+    fs::path p(path);
+    p = p.parent_path();
+    p /= "config.txt";
+    if (fs::exists(p))
+    {
+        std::ifstream file(p);
+        ParseFileText(file, skillPairs);
+    }
 }
 
 extern "C" __declspec(dllexport) void Init()
