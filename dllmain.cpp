@@ -28,6 +28,9 @@ void __stdcall ModStart()
     pattern = "45 0F B7 86 ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 8D 8D ?? ?? ?? ?? E8 ?? ?? ?? ?? 44 38 BD ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 45 33 C9 48 8D 8D ?? ?? ?? ?? 45 33 C0 33 D2 E8 ?? ?? ?? ?? 48 8B D8 48 85 C0 75 ?? 4D 8B E7";
     uintptr_t secondAddress = PatternScan(GetModuleHandle(NULL), pattern);
 
+    pattern = "45 0F B7 86 ?? ?? ?? ?? 48 8D 15 ?? ?? ?? ?? 48 8D 8D ?? ?? ?? ?? E8 ?? ?? ?? ?? 49 8B 9E ?? ?? ?? ??";
+    uintptr_t soundAddress = PatternScan(GetModuleHandle(NULL), pattern);
+
     pattern = "48 8D 0D ?? ?? ?? ?? 48 69 C0 A0 02 00 00 48 01 C8";
     uintptr_t unitArray = PatternScan(GetModuleHandle(NULL), pattern);
     unitArray = GetAddressFromGlobalRef(unitArray);
@@ -35,6 +38,7 @@ void __stdcall ModStart()
     skillIDReplacement = (uint16_t*)unitArray;
     int32_t offset = (int32_t)(unitArray - (instructionAddress + 8));
     int32_t offset2 = (int32_t)(unitArray - (secondAddress + 8));
+    int32_t offset3 = (int32_t)(unitArray - (soundAddress + 8));
 
 	std::array<BYTE,8> patch = 
     {
@@ -58,6 +62,17 @@ void __stdcall ModStart()
 		(BYTE)(offset2 >> 16),
 		(BYTE)(offset2 >> 24)
 	};
+	std::array<BYTE,8> patch3 = 
+    {
+	    0x4C,
+	    0x0F,
+		0xB7,
+		0x05,
+		(BYTE)(offset3),
+		(BYTE)(offset3 >> 8),
+		(BYTE)(offset3 >> 16),
+		(BYTE)(offset3 >> 24)
+	};
 
     //BYTE filler = 0x00;
 
@@ -69,6 +84,10 @@ void __stdcall ModStart()
 	VirtualProtect((void*)secondAddress, 8, PAGE_EXECUTE_READWRITE, &old);
 	memcpy((void*)secondAddress, patch2.data(), sizeof(patch2));
 	VirtualProtect((void*)secondAddress, 8, old, &old);
+
+	VirtualProtect((void*)soundAddress, 8, PAGE_EXECUTE_READWRITE, &old);
+	memcpy((void*)soundAddress, patch3.data(), sizeof(patch3));
+	VirtualProtect((void*)soundAddress, 8, old, &old);
 
     pattern = "48 8D 05 ?? ?? ?? ?? 48 89 44 24 ?? 48 8D 54 24 ?? 33 C0 48 8B CE";
     uintptr_t skillHotLoopAddress = PatternScan(GetModuleHandle(NULL), pattern);
