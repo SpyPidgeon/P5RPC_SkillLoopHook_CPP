@@ -111,6 +111,11 @@ void __stdcall ModStart()
     }
 }
 
+extern "C" __declspec(dllexport) void AddSkillPair(const uint16_t original, const uint16_t replacement)
+{
+    skillPairs.emplace(original, replacement);
+}
+
 extern "C" __declspec(dllexport) void Init()
 {
     CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ModStart, 0, 0, 0);
